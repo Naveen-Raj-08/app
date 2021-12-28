@@ -1,9 +1,9 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { appStore } from "../firebase/config";
 
 export const LoginForm = () => {
-  const [Name, setName] = useState(null);
+  const [Mail, setUserMail] = useState(null);
   const [UserName, setUsername] = useState(null);
   const [UserPassowrd, setUserPassowrd] = useState(null);
   const [Password, setPassowrd] = useState(null);
@@ -11,25 +11,35 @@ export const LoginForm = () => {
   const [UserData, setUserData] = useState([]);
   const [NullError, setNullError] = useState(null);
 
-  //   (() => {
-  //     appStore
-  //       .collection("user")
-  //       .get()
-  //       .then((snapshot) => {
-  //         let userData = [];
-  //         snapshot.forEach((doc) => {
-  //           const data = doc.data();
-  //           userData.push(data);
-  //         });
-  //         setUserData(userData);
-  //         UserData.map((data) => {
-  //           setName(data.Username);
-  //           setPassowrd(data.Userpassword);
-  //         });
-  //       });
-  //     console.log("Inside");
-  //     console.log(UserData);
-  //   });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log("Data fetching....");
+      await appStore
+        .collection("user")
+        .get()
+        .then((snap) => {
+          let data = [];
+          snap.docs.map((doc) => {
+            data.push(doc.data());
+          });
+          setUserData(data);
+          console.log(UserData);
+          console.log("Data got...");
+        });
+    };
+
+    fetchData();
+
+    UserData.map((data) => {
+      setUserMail(data.Usermail);
+      setPassowrd(data.Userpassword);
+      console.log(Mail + Password);
+    });
+
+    return () => fetchData();
+  }, [UserData]);
 
   const handleUserEmail = (e) => {
     let name = e.target.value;
@@ -46,19 +56,23 @@ export const LoginForm = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-
-    console.log(Name + Password);
+    const createCollection = appStore.collection("isAuth");
+    console.log(Mail + Password);
 
     if (UserData.length === 0) {
       setError("Please check the email/password");
+      console.log("Length 0");
     } else {
       if (UserName === null && UserPassowrd === null) {
         setNullError(true);
         setError(null);
+        console.log("User has no value");
       } else {
         setNullError(null);
-        if (UserName === Name && UserPassowrd === Password) {
+        if (UserName === Mail && UserPassowrd === Password) {
           console.log("Login Success..!");
+          navigate("/home");
+          createCollection.add({ isLogin: true });
         } else {
           setError("Invalid email/password");
         }
